@@ -124,7 +124,6 @@ def user_create():
         if login == password or password == display_name:
             flash("Gebruikersnaam en wachtwoord mogen niet hetzelfde zijn!", "danger")
             return redirect(url_for('user.user_overview'))
-        
 
       # Hash the password before saving
         hashed_password = hash_password(password)
