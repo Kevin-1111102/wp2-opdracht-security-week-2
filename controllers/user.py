@@ -116,26 +116,29 @@ def user_create():
     if "logged_in" not in session:
         return redirect(url_for('login.login'))
     if request.method == 'POST':
-        # Retrieve form data
         login = request.form.get('login')
         password = request.form.get('password')
         display_name = request.form.get('display_name')
-        is_admin = request.form.get('is_admin') == 'on'  # Checkbox is checked
+        is_admin = request.form.get('is_admin') == 'on'
 
-        # Hash the password before saving
+        if login == password:
+            flash("Gebruikersnaam en wachtwoord mogen niet hetzelfde zijn!", "danger")
+            return redirect(url_for('user.user_overview'))
+
+        if not login or not password or not display_name:
+            flash("Alle velden zijn verplicht!", "danger")
+            return redirect(url_for('user.user_overview'))
+
         hashed_password = hash_password(password)
-
-        # Process the form data (save to database, etc.)
         user_model = User()
         new_user = user_model.create_user(login, hashed_password, display_name, is_admin)
 
-        # Redirect after successful form submission
         if new_user:
             flash("Gebruiker met succes aangemaakt!", "success")
             return redirect(url_for('user.user_overview'))
         else:
             flash("Er is een fout opgetreden!", "danger")
-            return redirect(url_for('user.user_create'))
+            return redirect(url_for('user.user_overview'))
 
     return render_template('user_create.html')
 
@@ -145,9 +148,6 @@ def user_update(user_id):
     if "logged_in" not in session:
         return redirect(url_for('login.login'))
 
-    if session["is_admin"] == 0:
-        return redirect(url_for('question.question_overview'))
-
     user_model = User()
 
     if request.method == 'POST':
@@ -156,26 +156,17 @@ def user_update(user_id):
         display_name = request.form.get('display_name')
         is_admin = request.form.get('is_admin') == 'on'
 
-        # Hash the password if provided
+        if password and login == password:
+            flash("Gebruikersnaam en wachtwoord mogen niet hetzelfde zijn!", "danger")
+            return redirect(url_for('user.user_update', user_id=user_id))
+
         hashed_password = hash_password(password) if password else None
         user_model.update_user(user_id, login, hashed_password, display_name, is_admin)
-
-        # Optionally, add a success message
         flash("Gebruiker met succes bijgewerkt!", "update")
-
-        # Close the connection after updating the user
-        user_model.close_connection()
-
         return redirect(url_for('user.user_overview'))
 
-    # For GET request: Show the form pre-filled with user data
     user = user_model.get_single_user(user_id)
-
-    # Close the connection after fetching user data
-    user_model.close_connection()
-
     return render_template('user_update.html', user=user)
-
 
 @user_routes.route('/user/delete/<user_id>', methods=['GET', 'POST'])
 def user_delete(user_id):
