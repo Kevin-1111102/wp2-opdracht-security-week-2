@@ -121,10 +121,9 @@ def user_create():
         display_name = request.form.get('display_name')
         is_admin = request.form.get('is_admin') == 'on'
 
-        if login == password:
+        if login == password or password == display_name:
             flash("Gebruikersnaam en wachtwoord mogen niet hetzelfde zijn!", "danger")
             return redirect(url_for('user.user_overview'))
-
         
 
       # Hash the password before saving
@@ -158,20 +157,21 @@ def user_update(user_id):
         display_name = request.form.get('display_name')
         is_admin = request.form.get('is_admin') == 'on'
 
-        if password and login == password:
+        if login == password or password == display_name:
             flash("Gebruikersnaam en wachtwoord mogen niet hetzelfde zijn!", "danger")
-            return redirect(url_for('user.user_update', user_id=user_id))
-       # Hash the password if provided
+            return redirect(url_for('user.user_overview'))
+
         hashed_password = hash_password(password) if password else None
         user_model.update_user(user_id, login, hashed_password, display_name, is_admin)
 
-        # Optionally, add a success message
         flash("Gebruiker met succes bijgewerkt!", "update")
 
-        # Close the connection after updating the user
-        user_model.close_connection()
+
 
     user = user_model.get_single_user(user_id)
+
+    user_model.close_connection()
+
     return render_template('user_update.html', user=user)
 
 @user_routes.route('/user/delete/<user_id>', methods=['GET', 'POST'])
