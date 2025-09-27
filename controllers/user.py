@@ -125,20 +125,22 @@ def user_create():
             flash("Gebruikersnaam en wachtwoord mogen niet hetzelfde zijn!", "danger")
             return redirect(url_for('user.user_overview'))
 
-        if not login or not password or not display_name:
-            flash("Alle velden zijn verplicht!", "danger")
-            return redirect(url_for('user.user_overview'))
+        
 
+      # Hash the password before saving
         hashed_password = hash_password(password)
+
+        # Process the form data (save to database, etc.)
         user_model = User()
         new_user = user_model.create_user(login, hashed_password, display_name, is_admin)
 
+        # Redirect after successful form submission
         if new_user:
             flash("Gebruiker met succes aangemaakt!", "success")
             return redirect(url_for('user.user_overview'))
         else:
             flash("Er is een fout opgetreden!", "danger")
-            return redirect(url_for('user.user_overview'))
+            return redirect(url_for('user.user_create'))
 
     return render_template('user_create.html')
 
@@ -159,11 +161,15 @@ def user_update(user_id):
         if password and login == password:
             flash("Gebruikersnaam en wachtwoord mogen niet hetzelfde zijn!", "danger")
             return redirect(url_for('user.user_update', user_id=user_id))
-
+       # Hash the password if provided
         hashed_password = hash_password(password) if password else None
         user_model.update_user(user_id, login, hashed_password, display_name, is_admin)
+
+        # Optionally, add a success message
         flash("Gebruiker met succes bijgewerkt!", "update")
-        return redirect(url_for('user.user_overview'))
+
+        # Close the connection after updating the user
+        user_model.close_connection()
 
     user = user_model.get_single_user(user_id)
     return render_template('user_update.html', user=user)
